@@ -1,0 +1,35 @@
+Description
+===========
+
+qarm is a tool to use qemu-arm-static on ubuntu easily.
+It is just a bash shell script.
+
+
+How to use
+==========
+
+It requires root permission to run. Execute it in directory
+or copy to /usr/sbin/ for using.
+
+# cp qarm /usr/sbin/
+# qarm
+Usage:
+
+This is a tool to use qemu-arm-static on ubuntu easily.
+
+options
+  - download  download and unpack ubuntu-base-16.04.6-base-armhf.tar.gz
+              to ubuntu-rootfs/
+  - chroot    change root directory for ARM emulation
+  - pexit     post-exit. reverse operations of chroot, like,
+              umounting /proc /sys /dev.
+  - pack      pack ubuntu-rootfs/ to tar.gz
+
+
+Ubuntu version
+==============
+
+For other ubuntu rootfs version you want, modify the configuration in qarm file.
+
+UBUNTU_TAR_GZ=ubuntu-base-16.04.6-base-armhf.tar.gz
+UBUNTU_URL=http://cdimage.ubuntu.com/ubuntu-base/releases/xenial/release/${UBUNTU_TAR_GZ}

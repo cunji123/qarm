@@ -1,0 +1,156 @@
+#!/bin/bash
+#
+# Copyright 2020 Yangbo Lu <yangbo.lu.1991@gmail.com>
+#
+# This is free software, licensed under the GNU General Public License v2.
+# See /LICENSE for more information.
+
+UBUNTU_TAR_GZ=ubuntu-base-16.04.6-base-armhf.tar.gz
+UBUNTU_URL=http://cdimage.ubuntu.com/ubuntu-base/releases/xenial/release/${UBUNTU_TAR_GZ}
+UBUNTU_DIR=ubuntu-rootfs
+
+function print_help()
+{
+  echo "Usage:"
+  echo ""
+  echo "This is a tool to use qemu-arm-static on ubuntu easily."
+  echo ""
+  echo "options"
+  echo "  - download  download and unpack ${UBUNTU_TAR_GZ}"
+  echo "              to ${UBUNTU_DIR}/"
+  echo "  - chroot    change root directory for ARM emulation"
+  echo "  - pexit     post-exit. reverse operations of chroot, like,"
+  echo "              umounting /proc /sys /dev."
+  echo "  - pack      pack ${UBUNTU_DIR}/ to tar.gz"
+  echo ""
+}
+
+function download()
+{
+  if [ -e "${UBUNTU_DIR}" ]; then
+    echo "${UBUNTU_DIR} exists. override it? (y/n)"
+    read answer
+    if [ "${answer}" != "y" ]; then
+      return 1
+    fi
+  fi
+
+  echo "downloading ${UBUNTU_TAR_GZ} ..."
+  rm -rf ${UBUNTU_TAR_GZ}
+  wget ${UBUNTU_URL} > /dev/null
+  if [ $? -ne 0 ]; then
+    return 1
+  fi
+
+  echo "unpacking to ${UBUNTU_DIR}/ ..."
+  rm -rf ${UBUNTU_DIR}
+  mkdir ${UBUNTU_DIR}
+  tar zxvf ${UBUNTU_TAR_GZ} -C ${UBUNTU_DIR} > /dev/null
+  if [ $? -ne 0 ]; then
+    return 1
+  fi
+}
+
+function change_root()
+{
+  if [ ! -d "${UBUNTU_DIR}" ]; then
+    echo "no ${UBUNTU_DIR}/ in current directory!"
+    return 1
+  fi
+
+  if [ ! -f /usr/bin/qemu-arm-static ]; then
+    echo "no /usr/bin/qemu-arm-static, please install qemu-user-static."
+    return 1
+  fi
+
+  cp /usr/bin/qemu-arm-static ${UBUNTU_DIR}/usr/bin/
+  if [ $? -ne 0 ]; then
+    return 1
+  fi
+
+  # keep networking available
+  cp /etc/resolv.conf ${UBUNTU_DIR}/etc/resolv.conf
+  if [ $? -ne 0 ]; then
+    return 1
+  fi
+
+  mount -t proc /proc ${UBUNTU_DIR}/proc
+  if [ $? -ne 0 ]; then
+    return 1
+  fi
+
+  mount -t sysfs /sys ${UBUNTU_DIR}/sys
+  if [ $? -ne 0 ]; then
+    return 1
+  fi
+
+  mount -o bind /dev ${UBUNTU_DIR}/dev
+  if [ $? -ne 0 ]; then
+    return 1
+  fi
+
+  chroot ${UBUNTU_DIR}
+}
+
+function pexit()
+{
+  if [ ! -d "${UBUNTU_DIR}" ]; then
+    echo "no ${UBUNTU_DIR}/ in current directory!"
+    return 1
+  fi
+
+  umount ${UBUNTU_DIR}/proc
+  umount ${UBUNTU_DIR}/sys
+  umount ${UBUNTU_DIR}/dev
+
+  rm ${UBUNTU_DIR}/usr/bin/qemu-arm-static
+  rm ${UBUNTU_DIR}/etc/resolv.conf
+  touch ${UBUNTU_DIR}/etc/resolv.conf
+}
+
+function pack()
+{
+  if [ ! -d "${UBUNTU_DIR}" ]; then
+    echo "no ${UBUNTU_DIR}/ in current directory!"
+    return 1
+  fi
+
+  rm -rf ${UBUNTU_DIR}.tar.gz
+  cd ${UBUNTU_DIR}
+  tar zcvf ../${UBUNTU_DIR}.tar.gz ./* > /dev/null
+}
+
+# check number of args
+if [ $# -eq 0 ]; then
+  print_help
+  exit 1
+fi
+
+# check root permission
+if [ "$(whoami)" != "root" ]; then
+  echo "must run as root user!"
+  exit 1
+fi
+
+# call function
+case "$1" in
+  "download")
+    download
+  ;;
+  "chroot")
+    change_root
+  ;;
+  "pexit")
+    pexit
+  ;;
+  "pack")
+    pack
+  ;;
+  *)
+    print_help
+  ;;
+esac
+
+if [ $? -ne 0 ]; then
+  exit 1
+fi
