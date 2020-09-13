@@ -115,6 +115,7 @@ function pack()
     return 1
   fi
 
+  echo "packing into ${UBUNTU_DIR}.tar.gz ..."
   rm -rf ${UBUNTU_DIR}.tar.gz
   cd ${UBUNTU_DIR}
   tar zcvf ../${UBUNTU_DIR}.tar.gz ./* > /dev/null
