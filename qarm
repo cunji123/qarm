@@ -5,8 +5,8 @@
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
 
-UBUNTU_TAR_GZ=ubuntu-base-16.04.6-base-armhf.tar.gz
-UBUNTU_URL=http://cdimage.ubuntu.com/ubuntu-base/releases/xenial/release/${UBUNTU_TAR_GZ}
+UBUNTU_TAR_GZ=ubuntu-base-18.04.5-base-armhf.tar.gz
+UBUNTU_URL=http://cdimage.ubuntu.com/ubuntu-base/releases/bionic/release/${UBUNTU_TAR_GZ}
 UBUNTU_DIR=ubuntu-rootfs
 
 function print_help()
