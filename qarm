@@ -105,7 +105,12 @@ function pexit()
 
   rm ${UBUNTU_DIR}/usr/bin/qemu-arm-static
   rm ${UBUNTU_DIR}/etc/resolv.conf
-  touch ${UBUNTU_DIR}/etc/resolv.conf
+  if [ -e ${UBUNTU_DIR}/run/systemd/resolve/stub-resolv.conf ]; then
+    echo '' > ${UBUNTU_DIR}/run/systemd/resolve/stub-resolv.conf
+    ln -s ../run/systemd/resolve/stub-resolv.conf ${UBUNTU_DIR}/etc/resolv.conf
+  else
+    touch ${UBUNTU_DIR}/etc/resolv.conf
+  fi
 }
 
 function pack()
